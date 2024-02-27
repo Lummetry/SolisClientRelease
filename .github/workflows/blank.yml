@@ -1,0 +1,28 @@
+name: Receive Build
+
+on:
+  repository_dispatch:
+    types: [new-build]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Retrieve version
+        id: retrieve_version
+        run: |
+          echo "VERSION=$(cat version.py | grep -o "'.*'")" >> $GITHUB_OUTPUT
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: release
+          path: release
+      - run: ls release
+
+      - uses: ncipollo/release-action@v1
+        with:
+          artifacts: release/*.zip
+          name: Version ${{ steps.retrieve_version.outputs.version }}
+          allowUpdates: true
+          tag: ${{ steps.retrieve_version.outputs.version }}
